@@ -1,6 +1,13 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: running node js application
+
+env:
+  APP_NAME: staging
+  S3_BUCKET: for-practice-2
+  AWS_REGION: us-east-1
+  AWS_PLATFORM: Docker
+  PIPELINE_ID: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
 
 # Controls when the workflow will run
 on:
@@ -15,8 +22,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  create_eb_version:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -26,11 +32,51 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Run script
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - run: |
+          AWS_VERSION_LABEL=${{env.APP_NAME}}-${{env.PIPELINE_ID}}
+          echo "Creating Source Bundle"
+          zip -r ${{env.APP_NAME}}.zip app.js Dockerfile dockerignore package.json
+          S3_KEY="$AWS_VERSION_LABEL.zip"
 
+          echo "Uploading Source Bundle to S3"
+          aws s3 cp ${{env.APP_NAME}}.zip s3://${{env.S3_BUCKET}}/${S3_KEY} --region ${{env.AWS_REGION}}
+
+          echo "Creating Elastic Beanstalk version"
+          aws elasticbeanstalk create-application-version --application-name ${{env.APP_NAME}} --version-label $AWS_VERSION_LABEL --region ${{env.AWS_REGION}} --source-bundle S3Bucket=${{env.S3_BUCKET}},S3Key=${S3_KEY} --auto-create-application
+
+  deploy_aws:
+    needs: [create_eb_version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8 
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.8"
       # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      - name: Run script
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-id: ${{ secrets.AWS_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - run: |
+          AWS_VERSION_LABEL=${{env.APP_NAME}}-${{env.PIPELINE_ID}}
+
+          echo "Installing Elastic Beanstalk Cli"
+          python -m pip install --upgrade pip
+          pip install awsebcli --upgrade
+          eb --version
+
+          echo "Deploy init"
+          eb init -i ${{env.APP_NAME}} -p ${{env.AWS_PLATFORM}} -k ${{secrets.AWS_ID}} --region ${{env.AWS_REGION}}
+          eb deploy ${{env.APP_NAME}} --version ${AWS_VERSION_LABEL}
+          echo "Deploy finished"
