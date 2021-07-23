@@ -11,5 +11,5 @@ create an elastic beanstalk version which creates a new version for elastic bean
 deploy to elastic beanstalk environment which deploys new version to the environment we created.
 I created secret respositories to store access and secret keys
 Now files can be pushed and actions are implemented on them and will will be successful if the workflow is green , says that the application is deployed on the elastic bean stalk and stored in s3 bucket.
-When we click the link the webserver hello world should be up and running
+When we click the link the webserver hello master should be up and running
 
