@@ -13,3 +13,7 @@ I created secret respositories to store access and secret keys
 Now files can be pushed and actions are implemented on them and will will be successful if the workflow is green , says that the application is deployed on the elastic bean stalk and stored in s3 bucket.
 When we click the link the webserver hello master should be up and running
 
+Reference:
+https://stackoverflow.com/questions/57115520/can-i-have-multiple-github-actions-workflow-files
+https://github.com/marketplace/actions/beanstalk-deploy
+
