@@ -1,7 +1,7 @@
 # EBS
 
 creating workflow from git actions and deploying a node js application on elastic bean stalk using docker
-
+I have created 2 workflows main.yml and dev.yml so that they trigger when changes are made to them
 create an environemnt - web server and given the application name
 we use platform as docker
 the zip folder i.e; node js application is uploaded in it
