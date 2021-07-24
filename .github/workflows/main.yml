@@ -3,7 +3,7 @@
 name: running node js application
 
 env:
-  APP_NAME: staging
+  APP_NAME: production
   S3_BUCKET: for-practice
   AWS_REGION: us-east-1
   AWS_PLATFORM: Docker
